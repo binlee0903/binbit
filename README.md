@@ -1,2 +1,0 @@
-# binbit
-Study Operating System
