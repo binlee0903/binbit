@@ -43,13 +43,7 @@ _PROTECTED_MODE:
     mov esp, 0xFFFE
     mov ebp, 0xFFFE
 
-    push 2
-    push 0
-    push (successfullySwitchedMessage - $$ + 0x10000)
-    call Print
-    add esp, 12
-
-    jmp dword 0x18:0x10200
+	jmp dword 0x18:0x10200
 
     ret
 
@@ -143,7 +137,5 @@ GDT:
         db 0xCF
         db 0x00
 _GDTEND:
-
-successfullySwitchedMessage: db "Switched to 32bit Mode", 0
 
 times 512 - ($ - $$) db 0x00

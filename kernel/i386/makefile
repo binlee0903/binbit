@@ -1,5 +1,5 @@
 NASM = nasm
-GPP = g++ -c -std=c++11 -m32 -ffreestanding
+GPP = g++ -c -masm=intel -std=c++11 -m32 -ffreestanding
 LD = ld -melf_i386 -T $(SOURCE_DIRECTORY)/elf_i386.x -nostdlib -e main -Ttext 0x10200
 OBJCOPY = objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
 

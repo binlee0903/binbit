@@ -1,9 +1,10 @@
-./Output
-
 # Prerequisites
 *.d
 
 # Compiled Object files
+./Output
+Output/
+Output
 *.slo
 *.lo
 *.o
@@ -32,3 +33,6 @@
 *.exe
 *.out
 *.app
+
+# Manifests
+*.manifest

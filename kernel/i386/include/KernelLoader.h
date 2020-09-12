@@ -17,8 +17,6 @@ public:
     bool                CheckIA32Support();
     bool                CheckMemorySize();              // check memory size == 64MB
 
-    void                GetCPUID(unsigned int flag, unsigned int* result);
-
 	void 				Print(const char* str);
 	void 				PrintLine(const char* str);
 	

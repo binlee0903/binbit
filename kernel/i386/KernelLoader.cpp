@@ -6,7 +6,7 @@ KernelLoader::KernelLoader()
     , m64KernelEndAddress(reinterpret_cast<int*>(0x600000))
     , mMaxOSMemorySize(reinterpret_cast<int*>(0x4000000))
     , mCharacterCount(0)
-    , mLineCount(3) // after print bootloader messages
+    , mLineCount(1) // after print bootloader messages
     , mMemorySize(1)
 {
 
@@ -14,12 +14,45 @@ KernelLoader::KernelLoader()
 
 void KernelLoader::Execute64bitMode()
 {
-	return;
+	__asm__ __volatile__
+	(
+		"mov eax, cr4;"
+		"or eax, 0x20;"
+		"mov cr4, eax;"
+		"mov eax, 0x100000;"
+		"mov cr3, eax;"
+		"mov ecx, 0xC0000080;"
+		"rdmsr;"
+		"or eax, 0x0100;"
+		"wrmsr;"
+		"mov eax, cr0;"
+		"or eax, 0xE0000000;"
+		"xor eax, 0x60000000;"
+		"mov cr0, eax;"
+		"jmp 0x08:0x200000;"
+		:
+		:
+		: "eax", "ecx"
+	);
 }
 
 void KernelLoader::PrintCPUVender()
 {
-	return;
+	char cpuVenderString[15] = { 0, };
+	
+	__asm__ __volatile__
+	(
+		"xor eax, eax;"
+		"cpuid;"
+		"mov %0, ebx;"
+		"mov %0 + 4, edx;"
+		"mov %0 + 8, ecx;"
+		: "=m" (cpuVenderString)
+		: "m" (cpuVenderString)
+		: "eax", "ebx", "ecx", "edx"
+	);
+	
+	PrintLine(cpuVenderString);
 }
 
 void KernelLoader::Print(const char* str)
@@ -28,7 +61,15 @@ void KernelLoader::Print(const char* str)
     {
         if (mCharacterCount >= 160)
         {
-            mLineCount++;
+			if (mLineCount >= 25)
+			{
+				mLineCount = 0;
+			} 
+			else
+			{
+				mLineCount++;
+			}
+			
             mCharacterCount = 0;
         }
     
@@ -49,7 +90,13 @@ void KernelLoader::PrintLine(const char* str)
         mVideoMemory[mCharacterCount + (mLineCount * 160)] = str[i];
     }
     
-    mLineCount++;
+	if (mLineCount >= 25)
+	{
+		mLineCount = 0;
+	} else {
+		mLineCount++;
+	}
+	
     mCharacterCount = 0;
 }
 
@@ -144,9 +191,4 @@ bool KernelLoader::CheckMemorySize()
     PrintLine("MB");
 
     return true;
-}
-
-void KernelLoader::GetCPUID(unsigned int flag, unsigned int* result)
-{
-	return;
 }
