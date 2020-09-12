@@ -1,9 +1,0 @@
-KeyboardManager.o: ../kernel/ia32/KeyboardManager.cpp \
- ../kernel/ia32/./include/tools.h ../kernel/ia32/./include/types.h \
- ../kernel/ia32/./include/KeyboardManager.h
-Descriptor.o: ../kernel/ia32/Descriptor.cpp
-Utility.o: ../kernel/ia32/Utility.cpp ../kernel/ia32/./include/Utility.h
-main.o: ../kernel/ia32/main.cpp \
- ../kernel/ia32/./include/KeyboardManager.h \
- ../kernel/ia32/./include/types.h ../kernel/ia32/./include/types.h \
- ../kernel/ia32/./include/Utility.h
