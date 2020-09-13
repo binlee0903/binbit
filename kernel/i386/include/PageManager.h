@@ -7,7 +7,7 @@ public:
     PageManager()=default;
     ~PageManager()=default;
 
-    void InitiallizePageTables();
+    static void InitiallizePageTables();
 
     enum
     {
@@ -29,19 +29,19 @@ public:
 private:
     #pragma pack(push, 1)
 
-    typedef struct Entry
+    struct Entry
     {
         unsigned int attributeAndLowerBaseAddress;
         unsigned int upperBaseAddressAndEXB;
-    } PML4TENTRY, PDPTENTRY, PDENTRY, PTENTRY;
+    };
 
     #pragma pack(pop)
 
-    void setEntryData(PTENTRY* entry, unsigned int lowerBaseAddress, unsigned int upperBaseAddress, unsigned int lowerFlags, unsigned int upperFlags);
+    static void setEntryData(Entry* entry, unsigned int lowerBaseAddress, unsigned int upperBaseAddress, unsigned int lowerFlags, unsigned int upperFlags);
 
-    PML4TENTRY* const    mPageMapLevel4        = reinterpret_cast<PML4TENTRY*>(0x00100000);
-    PDPTENTRY*  const    mPageDirPointer       = reinterpret_cast<PDPTENTRY*>(0x00101000);
-    PDENTRY*    const    mPageDir              = reinterpret_cast<PDENTRY*>(0x00102000);
+    static Entry* const mPageMapLevel4;
+    static Entry* const mPageDirPointer;
+    static Entry* const mPageDir;
 };
 
 #endif

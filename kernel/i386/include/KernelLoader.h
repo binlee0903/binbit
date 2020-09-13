@@ -4,41 +4,30 @@
 class KernelLoader
 {
 public:
-    KernelLoader();
+    KernelLoader()=default;
+	~KernelLoader()=default;
 
-    void                Execute64bitMode();
-
-    void                PrintCPUVender();               // print cpu vender to console
-
-    void                InitializeKernelAreaMemory();   // init memory to 0
-    char*               IntegerToString(int target, char* string); // INCOMPLETE
-    void                Copy64bitKernelTo2MB();         // Copy IA-32e Kernel to 0x200000
-
-    bool                CheckIA32Support();
-    bool                CheckMemorySize();              // check memory size == 64MB
-
-	void 				Print(const char* str);
-	void 				PrintLine(const char* str);
-	
-    inline int*         Get64BitKernelStartAddress()    const { return m64KernelStartAddress; }
-    inline const int*   Get64BitKernelEndAddress()      const { return m64KernelEndAddress; }
+    static void         Execute64bitMode();
 
 private:
+    static void                PrintCPUVender();               // print cpu vender to console
+
+    static void                InitializeKernelAreaMemory();   // init memory to 0
+    static char*               IntegerToString(int target, char* string); // INCOMPLETE
+    static void                Copy64bitKernelTo2MB();         // Copy IA-32e Kernel to 0x200000
+
+    static bool                CheckIA32Support();
+    static bool                CheckMemorySize();              // check memory size == 64MB
+
     enum
     {
         SECTOR_SIZE = 512
     };
 
-    char* const              mVideoMemory;
-
-    int*          m64KernelStartAddress; // 64 bit kernel start address(=0x100000)
-    const int*    m64KernelEndAddress;   // 64 bit kernel end address(=0x600000)
-    const int*    mMaxOSMemorySize;      // OS's max memory size(=0x4000000)
-
-    unsigned short int  mCharacterCount;       // print function's helper variable
-    unsigned short int  mLineCount;            // same
-    
-    unsigned int        mMemorySize;           // pc's total memory size
+    static unsigned int* m64KernelStartAddress; // 64 bit kernel start address(=0x100000)
+    static const unsigned int* m64KernelEndAddress; // 64 bit kernel end address(=0x600000)
+    static const unsigned int* mMaxOSMemorySize; // OS's max memory size(=0x4000000)
+    static unsigned int mCalculatedMemorySize; // pc's total memory size
 };
 
 #endif // KERNEL_LOADER_GURAD

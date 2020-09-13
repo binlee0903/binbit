@@ -17,8 +17,6 @@ extern "C" int main()
 
     temp[1] = 0;
 
-    util.PrintLine("Hello");
-
     while (true)
     {
         temp[0] = keyboardManager.GetKeyboardInput();

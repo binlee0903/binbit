@@ -1,5 +1,9 @@
 #include "./include/PageManager.h"
 
+PageManager::Entry* const PageManager::mPageMapLevel4 = reinterpret_cast<Entry*>(0x00100000);
+PageManager::Entry* const PageManager::mPageDirPointer = reinterpret_cast<Entry*>(0x00101000);
+PageManager::Entry* const PageManager::mPageDir = reinterpret_cast<Entry*>(0x00102000);
+
 void PageManager::InitiallizePageTables()
 {
     setEntryData(mPageMapLevel4, 0x101000, 0x00, PAGE_FLAG_DEFAULT, PAGE_FLAG_NONE);
@@ -34,7 +38,7 @@ void PageManager::InitiallizePageTables()
     }
 }
 
-void PageManager::setEntryData(PTENTRY* entry, unsigned int lowerBaseAddress, unsigned int upperBaseAddress, unsigned int lowerFlags, unsigned int upperFlags)
+void PageManager::setEntryData(PageManager::Entry* entry, unsigned int lowerBaseAddress, unsigned int upperBaseAddress, unsigned int lowerFlags, unsigned int upperFlags)
 {
     entry->attributeAndLowerBaseAddress = lowerBaseAddress | lowerFlags;
     entry->upperBaseAddressAndEXB = (upperBaseAddress & 0xFF) | upperFlags;

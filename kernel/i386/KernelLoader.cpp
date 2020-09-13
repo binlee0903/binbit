@@ -1,19 +1,27 @@
+#include "./include/Console.h"
 #include "./include/KernelLoader.h"
+#include "./include/PageManager.h"
 
-KernelLoader::KernelLoader()
-    : mVideoMemory(reinterpret_cast<char*>(0xB8000))
-    , m64KernelStartAddress(reinterpret_cast<int*>(0x100000))
-    , m64KernelEndAddress(reinterpret_cast<int*>(0x600000))
-    , mMaxOSMemorySize(reinterpret_cast<int*>(0x4000000))
-    , mCharacterCount(0)
-    , mLineCount(1) // after print bootloader messages
-    , mMemorySize(1)
-{
-
-}
+unsigned int* KernelLoader::m64KernelStartAddress = reinterpret_cast<unsigned int*>(0x100000);
+const unsigned int* KernelLoader::m64KernelEndAddress = reinterpret_cast<const unsigned int*>(0x600000);
+const unsigned int* KernelLoader::mMaxOSMemorySize = reinterpret_cast<const unsigned int*>(0x4000000);
+unsigned int KernelLoader::mCalculatedMemorySize = 1;
 
 void KernelLoader::Execute64bitMode()
 {
+	if (!CheckMemorySize())
+    {
+        while (true)
+        {
+            ;
+        }
+    }
+    
+    InitializeKernelAreaMemory();
+    PageManager::InitiallizePageTables();
+    PrintCPUVender();
+    Copy64bitKernelTo2MB();
+	
 	__asm__ __volatile__
 	(
 		"mov eax, cr4;"
@@ -52,58 +60,13 @@ void KernelLoader::PrintCPUVender()
 		: "eax", "ebx", "ecx", "edx"
 	);
 	
-	PrintLine(cpuVenderString);
-}
-
-void KernelLoader::Print(const char* str)
-{
-    for (int i = 0; str[i] != 0; i++, mCharacterCount +=2)
-    {
-        if (mCharacterCount >= 160)
-        {
-			if (mLineCount >= 25)
-			{
-				mLineCount = 0;
-			} 
-			else
-			{
-				mLineCount++;
-			}
-			
-            mCharacterCount = 0;
-        }
-    
-        mVideoMemory[mCharacterCount + (mLineCount * 160)] = str[i];
-    }
-}
-
-void KernelLoader::PrintLine(const char* str)
-{
-    for (int i = 0; str[i] != 0; i++, mCharacterCount += 2)
-    {
-        if (mCharacterCount >= 160)
-        {
-            mLineCount++;
-            mCharacterCount = 0;
-        }
-        
-        mVideoMemory[mCharacterCount + (mLineCount * 160)] = str[i];
-    }
-    
-	if (mLineCount >= 25)
-	{
-		mLineCount = 0;
-	} else {
-		mLineCount++;
-	}
-	
-    mCharacterCount = 0;
+	Console::PrintLine(cpuVenderString);
 }
 
 void KernelLoader::InitializeKernelAreaMemory()
 {
-	int* startAddress = m64KernelStartAddress;
-	const int* endAddress = m64KernelEndAddress;
+	unsigned int* startAddress = m64KernelStartAddress;
+	const unsigned int* endAddress = m64KernelEndAddress;
 	
     while (startAddress < endAddress)
     {
@@ -161,34 +124,34 @@ void KernelLoader::Copy64bitKernelTo2MB()
 
 bool KernelLoader::CheckMemorySize()
 {
-    PrintLine("Start memory check");
+    Console::PrintLine("Start memory check");
 
-    int* temp = m64KernelStartAddress;
+    unsigned int* temp = m64KernelStartAddress;
     char memorySizeString[3];
 
     while (temp < mMaxOSMemorySize)
     {
         *temp = 0xbadf00d;
-        mMemorySize += 1;
+        mCalculatedMemorySize += 1;
 
         if (*temp != 0xbadf00d)
         {
-            IntegerToString(mMemorySize, memorySizeString);
-            PrintLine("Memory size not enough, min memory : 64MB");
-            Print("Your memory size : ");
-            Print(memorySizeString);
-            PrintLine("MB");
+            IntegerToString(mCalculatedMemorySize, memorySizeString);
+            Console::PrintLine("Memory size not enough, min memory : 64MB");
+            Console::Print("Your memory size : ");
+            Console::Print(memorySizeString);
+            Console::PrintLine("MB");
             return false;
         }
 
         temp += 0x100000 / 4;
     }
     
-    IntegerToString(mMemorySize, memorySizeString);
+    IntegerToString(mCalculatedMemorySize, memorySizeString);
 
-    Print("Memory check complete... Your memory size : ");
-    Print(memorySizeString);
-    PrintLine("MB");
+    Console::Print("Memory check complete... Your memory size : ");
+    Console::Print(memorySizeString);
+    Console::PrintLine("MB");
 
     return true;
 }
