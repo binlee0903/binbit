@@ -1,6 +1,8 @@
 #ifndef CONSOLE_GUARD
 #define CONSOLE_GUARD
 
+#include "stdint.h"
+
 class Console
 {
 public:
@@ -13,8 +15,8 @@ public:
 	static void PrintLine(const char* str);
 	
 private:
-	static unsigned char mCharacterCount;
-	static unsigned char mLineCount;
+	static uint8_t mCharacterCount;
+	static uint8_t mLineCount;
 	static char* const	mVideoMemory;
 };
 

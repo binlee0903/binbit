@@ -1,8 +1,6 @@
 #ifndef KEYBOARD_MANAGER_GUARD
 #define KEYBOARD_MANAGER_GUARD
 
-#include "types.h"
-
 class KeyboardManager
 {
 public:
@@ -27,9 +25,9 @@ private:
     void updateCombinationKeyStatusAndLED();
     
 private:
-    BYTE mScanCode;
+    unsigned char mScanCode;
     char mAsciiCode;
-    BYTE mFlags;
+    unsigned char mFlags;
     
 private:
     bool mbShift;
@@ -44,9 +42,9 @@ private:
 private:
     enum
     {
-        KEY_FLAGS_UP = 0,
-        KEY_FLAGS_DOWN = 0x01,
-        KEY_FLAGS_EXTENDEDKEY = 0x02,
+        KEY_UP = 0,
+        KEY_DOWN = 0x01,
+        KEY_EXTENDEDKEY = 0x02,
     
         ACK = 0xFA,
         STATUS_REG = 0x64,
@@ -99,8 +97,8 @@ private:
     
     struct KeyMappingStruct
     {
-        BYTE NormalCode;
-        BYTE CombinedCode;
+        unsigned char NormalCode;
+        unsigned char CombinedCode;
     };
     
     const KeyMappingStruct mKeyMappingTable[KEY_MAPPING_TABLE_COUNT];  

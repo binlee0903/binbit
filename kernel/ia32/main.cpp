@@ -1,17 +1,16 @@
-#include "./include/KeyboardManager.h"
-#include "./include/types.h"
-#include "./include/Utility.h"
+#include "include/KeyboardManager.h"
+#include "include/Console.h"
 
 extern "C" int main()
 {
-    Utility util;
+    Console console;
 
-    util.PrintLine("IA-32e mode kernel executed...");
-    util.PrintLine("Activate Keyboard...");
+    console.PrintLine("IA-32e mode kernel executed...");
+    console.PrintLine("Activate Keyboard...");
 
     KeyboardManager keyboardManager;
 
-    util.PrintLine("Sucessfully activated keyboard");
+    console.PrintLine("Sucessfully activated keyboard");
 
     char temp[2];
 
@@ -23,7 +22,7 @@ extern "C" int main()
 
         if (temp[0])
         {
-            util.Print(temp);
+            console.Print(temp);
         }
     }
 }
