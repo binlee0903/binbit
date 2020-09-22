@@ -1,59 +1,48 @@
 #ifndef KEYBOARD_MANAGER_GUARD
 #define KEYBOARD_MANAGER_GUARD
 
+#include "IOManager.h"
+
 class KeyboardManager
 {
 public:
     KeyboardManager();
-    char GetKeyboardInput();
-    
+
+    char GetKey();
+
+private:
+    char getAsciiCodeFromScanCode();
+
+    uint8_t getKey();
+
 private:
     bool activateKeyboard();
 
-    bool isAlphabetScanCode();
-    bool isNumpadScanCode();
-    bool isCombinedCode();
-    bool isNumberOrSymbolScanCode();
-
-    bool isInputBufferFull();
     bool isOutputBufferFull();
-    
-    bool changeKeyboardLED();
-    bool convertScanCodeToAscii();
 
-    void getScanCode();
-    void updateCombinationKeyStatusAndLED();
-    
 private:
-    unsigned char mScanCode;
-    char mAsciiCode;
-    unsigned char mFlags;
-    
+    IOManager mIOManager;
+
 private:
-    bool mbShift;
-    bool mbCapsLock;
-    bool mbNumLock;
-    bool mbScrollLock;
-    
-    bool mbExtendedCode;
-    
-    int mPauseProcessing;
-    
-private:
+    uint8_t mScancode;
+    uint8_t mKeyStatus;
+
+    enum 
+    {
+        KEY_ACTION_NONE,
+        KEY_ACTION_DOWN
+    };
+
     enum
     {
-        KEY_UP = 0,
-        KEY_DOWN = 0x01,
-        KEY_EXTENDEDKEY = 0x02,
-    
         ACK = 0xFA,
-        STATUS_REG = 0x64,
-        CTRL_REG = 0x64,
+        KEYBOARD_STATUS_REG = 0x64,
+        KEYBOARD_CONTROL_REG = 0x64,
         INPUT_BUFFER = 0x60,
         OUTPUT_BUFFER = 0x60,
         KEY_MAPPING_TABLE_COUNT = 89
     };
-    
+
     enum
     {
         KEY_NONE        =   0x00,
@@ -94,14 +83,15 @@ private:
         KEY_F12         =   0x9F,
         KEY_PAUSE       =   0xA0,
     };
-    
-    struct KeyMappingStruct
+
+private:
+    struct AsciiConvertTable
     {
-        unsigned char NormalCode;
-        unsigned char CombinedCode;
+        uint8_t NormalCode;
+        uint8_t CombinationCode;
     };
     
-    const KeyMappingStruct mKeyMappingTable[KEY_MAPPING_TABLE_COUNT];  
+    const AsciiConvertTable mConvertTable[KEY_MAPPING_TABLE_COUNT];
 };
 
 #endif

@@ -5,8 +5,8 @@ Console::Console()
 	Clear();
 }
 
-unsigned char Console::mCharacterCount = 0;
-unsigned char Console::mLineCount = 0;
+uint8_t Console::mCharacterCount = 0;
+uint8_t Console::mLineCount = 0;
 char* const	Console::mVideoMemory = reinterpret_cast<char*>(0xB8000);
 
 void Console::Clear()
