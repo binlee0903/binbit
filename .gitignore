@@ -1,3 +1,6 @@
+# Visual Studio Code config file
+.vscode/
+
 # Compiled Object files
 Output/
 
