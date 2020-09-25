@@ -109,14 +109,106 @@ char KeyboardManager::GetKey()
 {
     if (isOutputBufferFull())
     {
-        char key = getKey();
-        
+        getKey();
 
         if (mKeyStatus == KEY_ACTION_DOWN)
         {
-            return key;
+            return mKey;
         }
     }
     
     return 0;
+}
+
+bool KeyboardManager::setKeyboardLED(bool bCaps, bool bNum, bool bScroll)
+{
+    waitForInputBufferAvailable();
+
+    // send keyboard led change command
+    mIOManager.WritePort(OUTPUT_BUFFER, 0xED);
+    waitForInputBufferAvailable();
+    waitForKeyboardResponse();
+
+    // send led status values
+    mIOManager.WritePort(INPUT_BUFFER, (bCaps << 2) | (bNum << 1) | bScroll);
+    waitForInputBufferAvailable();
+    return waitForKeyboardResponse();
+}
+
+char KeyboardManager::getKey()
+{
+
+}
+
+bool KeyboardManager::activateKeyboard()
+{
+    // activate keyboard device, but real keyboard not activated
+    mIOManager.WritePort(KEYBOARD_CONTROL_REG, 0xAE);
+
+    waitForInputBufferAvailable();
+
+    // send keyboard activate command
+    mIOManager.WritePort(INPUT_BUFFER, 0xF4);
+    
+    return waitForKeyboardResponse();
+}
+
+bool KeyboardManager::isCombinationKeyPressed()
+{
+
+}
+
+bool KeyboardManager::isInputBufferFull()
+{
+    if (mIOManager.ReadPort(KEYBOARD_STATUS_REG) & 0x02)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool KeyboardManager::isOutputBufferFull()
+{
+    if (mIOManager.ReadPort(KEYBOARD_STATUS_REG) & 0x01)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+// temp function while no interrupt
+bool KeyboardManager::waitForKeyboardResponse()
+{
+    for (uint32_t i = 0; i < 100; i++)
+    {
+        for (uint32_t j = 0; j < 0xFFFF; j++)
+        {
+            if (isOutputBufferFull())
+            {
+                break;
+            }
+        }
+
+        if (mIOManager.ReadPort(OUTPUT_BUFFER) == KEYBOARD_RESPONSE)
+        {
+            return  true;
+        }
+    }
+
+    return false;
+}
+
+bool KeyboardManager::waitForInputBufferAvailable()
+{
+    for (uint32_t i = 0; i < 0xFFFF; i++)
+    {
+        if (!isInputBufferFull())
+        {
+            return true;
+        }
+    }
+
+    return false;
 }

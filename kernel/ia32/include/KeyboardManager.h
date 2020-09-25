@@ -11,19 +11,22 @@ public:
     char GetKey();
 
 private:
-    char getAsciiCodeFromScanCode();
-
-    uint8_t getKey();
+    bool setKeyboardLED(bool bScroll, bool bCaps, bool bNum);
+    char getKey();
 
 private:
     bool activateKeyboard();
-
+    bool isCombinationKeyPressed();
+    bool isInputBufferFull();
     bool isOutputBufferFull();
+    bool waitForKeyboardResponse();
+    bool waitForInputBufferAvailable();
 
 private:
     IOManager mIOManager;
 
 private:
+    char    mKey;
     uint8_t mScancode;
     uint8_t mKeyStatus;
 
@@ -35,7 +38,7 @@ private:
 
     enum
     {
-        ACK = 0xFA,
+        KEYBOARD_RESPONSE = 0xFA,
         KEYBOARD_STATUS_REG = 0x64,
         KEYBOARD_CONTROL_REG = 0x64,
         INPUT_BUFFER = 0x60,
