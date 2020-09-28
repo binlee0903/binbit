@@ -111,16 +111,16 @@ char KeyboardManager::GetKey()
     {
         getKey();
 
-        if (mKeyStatus == KEY_ACTION_DOWN)
+        if (mKeyStatus == KEY_ACTION_DOWN && mKey != KEY_INVALID)
         {
             return mKey;
         }
     }
     
-    return 0;
+    return KEY_NOT_EXIST;
 }
 
-bool KeyboardManager::setKeyboardLED(bool bCaps, bool bNum, bool bScroll)
+bool KeyboardManager::setKeyboardLED()
 {
     waitForInputBufferAvailable();
 
@@ -130,14 +130,81 @@ bool KeyboardManager::setKeyboardLED(bool bCaps, bool bNum, bool bScroll)
     waitForKeyboardResponse();
 
     // send led status values
-    mIOManager.WritePort(INPUT_BUFFER, (bCaps << 2) | (bNum << 1) | bScroll);
+    mIOManager.WritePort(INPUT_BUFFER, (mbCaps << 2) | (mbNum << 1) | mbScroll);
     waitForInputBufferAvailable();
     return waitForKeyboardResponse();
 }
 
 char KeyboardManager::getKey()
 {
+    while (!isOutputBufferFull())
+    {
+        ;
+    }
 
+    uint8_t scanCode = mIOManager.ReadPort(OUTPUT_BUFFER);
+
+    if (scanCode & 0x80)
+    {
+        scanCode &= 0x7F;
+        mKeyStatus = KEY_ACTION_UP;
+    }
+    else
+    {
+        mKeyStatus = KEY_ACTION_DOWN;
+    }
+    
+    if (scanCode == 0xE1)
+    {
+        processPauseKey();
+        return KEY_PAUSE;
+    }
+
+    if (scanCode == 0xE0)
+    {
+        scanCode = processExtendedKey();
+    }
+
+    updateCombinationKeyStatus(scanCode);
+
+    // check alphabet key
+    if ('a' <= mConvertTable[scanCode].NormalCode && mConvertTable[scanCode].NormalCode <='z')
+    {
+        if (mbShift || mbCaps)
+        {
+            return mConvertTable[scanCode].CombinationCode;
+        }
+        else
+        {
+            return mConvertTable[scanCode].NormalCode;
+        }
+    }
+
+    // check number and special key
+    if (2 <= scanCode && scanCode <= 53)
+    {
+        if (mbShift)
+        {
+            return mConvertTable[scanCode].CombinationCode;
+        }
+        else
+        {
+            return mConvertTable[scanCode].NormalCode;
+        }
+    }
+
+    // check numpad
+    if (71 <= scanCode && scanCode <= 83)
+    {
+        if (mbNum)
+        {
+            return mConvertTable[scanCode].CombinationCode;
+        }
+        else
+        {
+            return mConvertTable[scanCode].NormalCode;
+        }
+    }
 }
 
 bool KeyboardManager::activateKeyboard()
@@ -153,9 +220,78 @@ bool KeyboardManager::activateKeyboard()
     return waitForKeyboardResponse();
 }
 
-bool KeyboardManager::isCombinationKeyPressed()
+void KeyboardManager::updateCombinationKeyStatus(uint8_t scanCode)
 {
+    if (scanCode == 42 || scanCode == 54)
+    {
+        mbShift = true;
+    }
 
+    bool ledStatusChanged = false;
+
+    if (mKeyStatus == KEY_ACTION_DOWN)
+    {
+        if ((scanCode == 42 || scanCode == 54))
+        {
+            mbShift = true;
+        }
+
+        if (scanCode == 58)
+        {
+            mbCaps ^= true;
+            ledStatusChanged = true;
+        }
+
+        if (scanCode == 69)
+        {
+            mbNum ^= true;
+            ledStatusChanged = true;
+        }
+
+        if (scanCode == 70)
+        {
+            mbScroll ^= true;
+            ledStatusChanged = true;
+        }
+    }
+
+    if (mKeyStatus == KEY_ACTION_UP)
+    {
+        if ((scanCode == 42 || scanCode == 54))
+        {
+            mbShift = false;
+        }
+    }
+
+    if (ledStatusChanged)
+    {
+        setKeyboardLED();
+    }
+}
+
+uint8_t KeyboardManager::processExtendedKey()
+{
+    while (!isOutputBufferFull())
+    {
+        ;
+    }
+
+    return mIOManager.ReadPort(OUTPUT_BUFFER);
+}
+
+void KeyboardManager::processPauseKey()
+{
+    uint8_t scanCode = 0;
+
+    for (uint8_t i = 0; i < 2; i++)
+    {
+        while (!isOutputBufferFull())
+        {
+            ;
+        }
+
+        scanCode = mIOManager.ReadPort(OUTPUT_BUFFER);
+    }
 }
 
 bool KeyboardManager::isInputBufferFull()

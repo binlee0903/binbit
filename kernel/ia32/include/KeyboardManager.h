@@ -10,13 +10,23 @@ public:
 
     char GetKey();
 
+    enum 
+    {
+        KEY_INVALID = -1,
+        KEY_NOT_EXIST = -2
+    };
+
 private:
-    bool setKeyboardLED(bool bScroll, bool bCaps, bool bNum);
+    bool setKeyboardLED();
     char getKey();
 
 private:
+    void updateCombinationKeyStatus(uint8_t scanCode);
+    void processPauseKey();
+
+    uint8_t processExtendedKey();
+
     bool activateKeyboard();
-    bool isCombinationKeyPressed();
     bool isInputBufferFull();
     bool isOutputBufferFull();
     bool waitForKeyboardResponse();
@@ -26,14 +36,20 @@ private:
     IOManager mIOManager;
 
 private:
+    bool mbShift;
+    bool mbCaps;
+    bool mbNum;
+    bool mbScroll;
+
     char    mKey;
     uint8_t mScancode;
     uint8_t mKeyStatus;
 
     enum 
     {
-        KEY_ACTION_NONE,
-        KEY_ACTION_DOWN
+        KEY_ACTION_NONE = 0,
+        KEY_ACTION_UP = 0x01,
+        KEY_ACTION_DOWN = 0x02
     };
 
     enum
