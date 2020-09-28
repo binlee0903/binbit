@@ -205,6 +205,8 @@ char KeyboardManager::getKey()
             return mConvertTable[scanCode].NormalCode;
         }
     }
+	
+	return KEY_INVALID;
 }
 
 bool KeyboardManager::activateKeyboard()

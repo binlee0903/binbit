@@ -2,11 +2,11 @@
 
 uint8_t IOManager::ReadPort(uint8_t portNumber)
 {
-    uint8_t receivedValue = 0;
+    uint16_t receivedValue = 0;
 
     __asm__ __volatile__
     (
-        "mov rax, %1;"
+        "mov ax, %1;"
         "in %0, ax;"
         "ret;"
         : "=r" (receivedValue)
@@ -17,7 +17,7 @@ uint8_t IOManager::ReadPort(uint8_t portNumber)
     return receivedValue;
 }
 
-void IOManager::WritePort(uint8_t portNumber, uint8_t data)
+void IOManager::WritePort(uint8_t portNumber, uint16_t data)
 {
     __asm__ __volatile__
     (
