@@ -1,12 +1,13 @@
 #ifndef KEYBOARD_MANAGER_GUARD
 #define KEYBOARD_MANAGER_GUARD
 
+#include "Console.h"
 #include "IOManager.h"
 
 class KeyboardManager
 {
 public:
-    KeyboardManager();
+    KeyboardManager(Console& console);
 
     char GetKey();
 
@@ -21,7 +22,6 @@ private:
     char getKey();
 
 private:
-    void updateCombinationKeyStatus(uint8_t scanCode);
     void processPauseKey();
 
     uint8_t processExtendedKey();
@@ -29,10 +29,12 @@ private:
     bool activateKeyboard();
     bool isInputBufferFull();
     bool isOutputBufferFull();
+	bool updateCombinationKeyStatus(uint8_t scanCode);
     bool waitForKeyboardResponse();
     bool waitForInputBufferAvailable();
 
 private:
+	Console& mConsole;
     IOManager mIOManager;
 
 private:
@@ -41,7 +43,6 @@ private:
     bool mbNum;
     bool mbScroll;
 
-    char    mKey;
     uint8_t mScancode;
     uint8_t mKeyStatus;
 

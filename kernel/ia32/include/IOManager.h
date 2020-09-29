@@ -9,8 +9,8 @@ public:
     IOManager()=default;
     ~IOManager()=default;
 
-    uint8_t ReadPort(uint8_t portNumber);
-    void WritePort(uint8_t portNumber, uint16_t data);
+    uint8_t ReadPort(uint16_t portNumber);
+    void WritePort(uint16_t portNumber, uint8_t data);
 
 private:
     

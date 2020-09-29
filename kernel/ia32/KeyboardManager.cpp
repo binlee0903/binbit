@@ -1,8 +1,13 @@
 #include "./include/IOManager.h"
 #include "./include/KeyboardManager.h"
 
-KeyboardManager::KeyboardManager()
-    : mIOManager()
+KeyboardManager::KeyboardManager(Console& console)
+    : mConsole(console)
+	, mIOManager()
+	, mbShift(false)
+	, mbCaps(false)
+	, mbNum(false)
+	, mbScroll(false)
     , mScancode(0)
     , mKeyStatus(KEY_ACTION_NONE)
     , mConvertTable
@@ -101,7 +106,12 @@ KeyboardManager::KeyboardManager()
 {
     if (!activateKeyboard())
     {
+		mConsole.PrintLine("activation failed");
+		
         while (true);
+		{
+			;
+		}
     }
 }
 
@@ -109,11 +119,11 @@ char KeyboardManager::GetKey()
 {
     if (isOutputBufferFull())
     {
-        getKey();
+        char key = getKey();
 
-        if (mKeyStatus == KEY_ACTION_DOWN && mKey != KEY_INVALID)
+        if (mKeyStatus == KEY_ACTION_DOWN && key != KEY_INVALID)
         {
-            return mKey;
+            return key;
         }
     }
     
@@ -141,7 +151,7 @@ char KeyboardManager::getKey()
     {
         ;
     }
-
+	
     uint8_t scanCode = mIOManager.ReadPort(OUTPUT_BUFFER);
 
     if (scanCode & 0x80)
@@ -206,29 +216,75 @@ char KeyboardManager::getKey()
         }
     }
 	
+	if (57 == scanCode)
+	{
+		return mConvertTable[scanCode].NormalCode;
+	}
+	
 	return KEY_INVALID;
 }
 
 bool KeyboardManager::activateKeyboard()
 {
     // activate keyboard device, but real keyboard not activated
-    mIOManager.WritePort(KEYBOARD_CONTROL_REG, 0xAE);
-
+    mIOManager.WritePort(0x64, 0xAE);
+	
     waitForInputBufferAvailable();
-
+	
     // send keyboard activate command
-    mIOManager.WritePort(INPUT_BUFFER, 0xF4);
+    mIOManager.WritePort(0x60, 0xF4);
     
     return waitForKeyboardResponse();
 }
 
-void KeyboardManager::updateCombinationKeyStatus(uint8_t scanCode)
+
+uint8_t KeyboardManager::processExtendedKey()
 {
-    if (scanCode == 42 || scanCode == 54)
+    while (!isOutputBufferFull())
     {
-        mbShift = true;
+        ;
     }
 
+    return mIOManager.ReadPort(OUTPUT_BUFFER);
+}
+
+void KeyboardManager::processPauseKey()
+{
+    uint8_t scanCode = 0;
+
+    for (uint8_t i = 0; i < 2; i++)
+    {
+        while (!isOutputBufferFull())
+        {
+            ;
+        }
+
+        scanCode = mIOManager.ReadPort(OUTPUT_BUFFER);
+    }
+}
+
+bool KeyboardManager::isInputBufferFull()
+{
+    if (mIOManager.ReadPort(KEYBOARD_STATUS_REG) & 0x02)
+    {
+        return true;
+    }
+	
+    return false;
+}
+
+bool KeyboardManager::isOutputBufferFull()
+{
+    if (mIOManager.ReadPort(KEYBOARD_STATUS_REG) & 0x01)
+    {
+        return true;
+    }
+
+    return false;
+}
+
+bool KeyboardManager::updateCombinationKeyStatus(uint8_t scanCode)
+{
     bool ledStatusChanged = false;
 
     if (mKeyStatus == KEY_ACTION_DOWN)
@@ -262,6 +318,7 @@ void KeyboardManager::updateCombinationKeyStatus(uint8_t scanCode)
         if ((scanCode == 42 || scanCode == 54))
         {
             mbShift = false;
+			return true;
         }
     }
 
@@ -269,51 +326,8 @@ void KeyboardManager::updateCombinationKeyStatus(uint8_t scanCode)
     {
         setKeyboardLED();
     }
-}
-
-uint8_t KeyboardManager::processExtendedKey()
-{
-    while (!isOutputBufferFull())
-    {
-        ;
-    }
-
-    return mIOManager.ReadPort(OUTPUT_BUFFER);
-}
-
-void KeyboardManager::processPauseKey()
-{
-    uint8_t scanCode = 0;
-
-    for (uint8_t i = 0; i < 2; i++)
-    {
-        while (!isOutputBufferFull())
-        {
-            ;
-        }
-
-        scanCode = mIOManager.ReadPort(OUTPUT_BUFFER);
-    }
-}
-
-bool KeyboardManager::isInputBufferFull()
-{
-    if (mIOManager.ReadPort(KEYBOARD_STATUS_REG) & 0x02)
-    {
-        return true;
-    }
-
-    return false;
-}
-
-bool KeyboardManager::isOutputBufferFull()
-{
-    if (mIOManager.ReadPort(KEYBOARD_STATUS_REG) & 0x01)
-    {
-        return true;
-    }
-
-    return false;
+	
+	return false;
 }
 
 // temp function while no interrupt
@@ -331,10 +345,10 @@ bool KeyboardManager::waitForKeyboardResponse()
 
         if (mIOManager.ReadPort(OUTPUT_BUFFER) == KEYBOARD_RESPONSE)
         {
-            return  true;
+            return true;
         }
     }
-
+	
     return false;
 }
 

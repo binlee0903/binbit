@@ -8,19 +8,19 @@ extern "C" int main()
     console.PrintLine("IA-32e mode kernel executed...");
     console.PrintLine("Activate Keyboard...");
 
-    KeyboardManager keyboardManager;
+    KeyboardManager keyboardManager(console);
 
     console.PrintLine("Sucessfully activated keyboard");
-
+	
     char temp[2];
 
     temp[1] = 0;
-
+	
     while (true)
     {
         temp[0] = keyboardManager.GetKey();
 
-        if (temp[0])
+        if (temp[0] != keyboardManager.KEY_NOT_EXIST)
         {
             console.Print(temp);
         }
