@@ -13,7 +13,7 @@ private:
     static void PrintCPUVender(); // print cpu vender to console
 
     static void InitializeKernelAreaMemory(); // init memory to 0
-	static void IntegerToString(int target, char* string)
+	static void IntegerToString(int target, char* string);
     static void Copy64bitKernelTo2MB(); // Copy IA-32e Kernel to 0x200000
 
     static bool CheckIA32Support();
