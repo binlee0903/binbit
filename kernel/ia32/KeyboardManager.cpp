@@ -175,7 +175,10 @@ char KeyboardManager::getKey()
         scanCode = processExtendedKey();
     }
 
-    updateCombinationKeyStatus(scanCode);
+    if (updateCombinationKeyStatus(scanCode))
+	{
+		return KEY_INVALID;
+	}
 
     // check alphabet key
     if ('a' <= mConvertTable[scanCode].NormalCode && mConvertTable[scanCode].NormalCode <='z')
@@ -285,32 +288,34 @@ bool KeyboardManager::isOutputBufferFull()
 
 bool KeyboardManager::updateCombinationKeyStatus(uint8_t scanCode)
 {
-    bool ledStatusChanged = false;
 
     if (mKeyStatus == KEY_ACTION_DOWN)
     {
-        if ((scanCode == 42 || scanCode == 54))
-        {
-            mbShift = true;
-        }
-
-        if (scanCode == 58)
-        {
-            mbCaps ^= true;
-            ledStatusChanged = true;
-        }
-
-        if (scanCode == 69)
-        {
-            mbNum ^= true;
-            ledStatusChanged = true;
-        }
-
-        if (scanCode == 70)
-        {
-            mbScroll ^= true;
-            ledStatusChanged = true;
-        }
+		switch (scanCode)
+		{
+			case 42:
+			case 54:
+				mbShift = true;
+				return true;
+				
+			case 58:
+				mbCaps ^= true;
+				setKeyboardLED();
+				return true;
+				
+			case 69:
+				mbNum ^= true;
+				setKeyboardLED();
+				return true;
+				
+			case 70:
+				mbScroll ^= true;
+				setKeyboardLED();
+				return true;
+				
+			default:
+				return false;
+		}
     }
 
     if (mKeyStatus == KEY_ACTION_UP)
@@ -320,11 +325,6 @@ bool KeyboardManager::updateCombinationKeyStatus(uint8_t scanCode)
             mbShift = false;
 			return true;
         }
-    }
-
-    if (ledStatusChanged)
-    {
-        setKeyboardLED();
     }
 	
 	return false;

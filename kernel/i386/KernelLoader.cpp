@@ -84,7 +84,7 @@ void KernelLoader::InitializeKernelAreaMemory()
     }
 }
 
-char* KernelLoader::IntegerToString(int target, char* string)
+void KernelLoader::IntegerToString(int target, char* string)
 {
     int temp = target;
     int index = 0;
@@ -102,8 +102,6 @@ char* KernelLoader::IntegerToString(int target, char* string)
     }
 
     string[index] = '\0';
-
-    return nullptr;
 }
 
 void KernelLoader::Copy64bitKernelTo2MB()

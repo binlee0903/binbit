@@ -4,7 +4,7 @@
 #include "Console.h"
 #include "IOManager.h"
 
-class KeyboardManager
+class KeyboardManager final
 {
 public:
     KeyboardManager(Console& console);
@@ -21,9 +21,7 @@ private:
     bool setKeyboardLED();
     char getKey();
 
-private:
     void processPauseKey();
-
     uint8_t processExtendedKey();
 
     bool activateKeyboard();
@@ -37,7 +35,6 @@ private:
 	Console& mConsole;
     IOManager mIOManager;
 
-private:
     bool mbShift;
     bool mbCaps;
     bool mbNum;
@@ -104,7 +101,6 @@ private:
         KEY_PAUSE       =   0xA0,
     };
 
-private:
     struct AsciiConvertTable
     {
         uint8_t NormalCode;

@@ -7,17 +7,17 @@ public:
     KernelLoader()=default;
 	~KernelLoader()=default;
 
-    static void         Execute64bitMode();
+    static void Execute64bitMode();
 
 private:
-    static void                PrintCPUVender();               // print cpu vender to console
+    static void PrintCPUVender(); // print cpu vender to console
 
-    static void                InitializeKernelAreaMemory();   // init memory to 0
-    static char*               IntegerToString(int target, char* string); // INCOMPLETE
-    static void                Copy64bitKernelTo2MB();         // Copy IA-32e Kernel to 0x200000
+    static void InitializeKernelAreaMemory(); // init memory to 0
+	static void IntegerToString(int target, char* string)
+    static void Copy64bitKernelTo2MB(); // Copy IA-32e Kernel to 0x200000
 
-    static bool                CheckIA32Support();
-    static bool                CheckMemorySize();              // check memory size == 64MB
+    static bool CheckIA32Support();
+    static bool CheckMemorySize(); // check memory size == 64MB
 
     enum
     {
