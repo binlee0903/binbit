@@ -108,7 +108,7 @@ KeyboardManager::KeyboardManager(Console& console)
     {
 		mConsole.PrintLine("activation failed");
 		
-        while (true);
+        while (true)
 		{
 			;
 		}
@@ -127,7 +127,7 @@ char KeyboardManager::GetKey()
         }
     }
     
-    return KEY_NOT_EXIST;
+    return KEY_INVALID;
 }
 
 bool KeyboardManager::setKeyboardLED()

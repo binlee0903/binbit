@@ -13,8 +13,7 @@ public:
 
     enum 
     {
-        KEY_INVALID = -1,
-        KEY_NOT_EXIST = -2
+        KEY_INVALID = -1
     };
 
 private:

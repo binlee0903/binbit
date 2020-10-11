@@ -1,5 +1,5 @@
 NASM = nasm -f elf64
-GPP = g++ -c -masm=intel -std=c++11 -m64 -ffreestanding
+GPP = g++ -c -Wno-narrowing -masm=intel -std=c++11 -m64 -ffreestanding
 LD = ld -melf_x86_64 -T $(SOURCE_DIRECTORY)/elf_x86_64.x -nostdlib -e main -Ttext 0x200000
 OBJCOPY = objcopy -j .text -j .data -j .rodata -j .bss -S -O binary
 
