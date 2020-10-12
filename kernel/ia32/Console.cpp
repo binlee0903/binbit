@@ -17,6 +17,9 @@ void Console::Clear()
 	{
 		mVideoMemory[i] = 0;
 	}
+	
+	mCharacterCount = 0;
+	mLineCount = 0;
 }
 
 void Console::Print(const char* str)

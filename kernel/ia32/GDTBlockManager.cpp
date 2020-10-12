@@ -1,142 +1,109 @@
 #include "include/GDTBlockManager.h"
-#include "include/GlobalTableDescriptor.h"
-#include "include/SegmentDescriptor.h"
-#include "include/TaskStateSegmentDescriptor.h"
-#include "include/TssSegment.h"
-#include "include/IDTTableDescriptor.h"
 #include "include/InterruptHandler.h"
 
-extern "C" void test()
-{
-	while (true)
-	{
-		;
-	}
-}
-
 GDTBlockManager::GDTBlockManager(Console& console)
-	: mGDTBlock(0x142000)
-	, mSize(0x142000)
+	: mTableIndex(GDT_START_ADDRESS)
 	, mConsole(console)
-{
-	GlobalTableDescriptor* desc = reinterpret_cast<GlobalTableDescriptor*>(mGDTBlock);
-	desc->Size = sizeof(SegmentDescriptor) * 3 + sizeof(TaskStateSegmentDescriptor) - 1;
-	desc->BaseAddress = mGDTBlock + sizeof(GlobalTableDescriptor);
-	mSize += sizeof(GlobalTableDescriptor);
-		
-	AddSegmentDescriptor(0, 0, 0, 0, 0, 0); // NULL Descriptor
-	AddSegmentDescriptor(0xFFFFF, 0, 0, 0x9A, 0xA0, 0); // Code Descriptor
-	AddSegmentDescriptor(0xFFFFF, 0, 0, 0x92, 0xA0, 0); // Data Descriptor
-		
-	uint64_t tssBaseAddress = mSize + sizeof(TaskStateSegmentDescriptor);
-	char str[20];
-	Interrupt::itoa(tssBaseAddress, str);
-	mConsole.PrintLine(str);
-		
-	AddTssSegmentDescriptor((sizeof(TssSegment) - 1), tssBaseAddress, 0x89, 0x80, 0);
-		
-	uint64_t rsp[3] = {0, 0, 0};
-	uint64_t ist[7] = {0x800000, 0, 0, 0, 0, 0, 0};
-	AddTssSegment(0, rsp, 0, ist, 0, 0, 0xFFFF);
-		
-	GlobalTableDescriptor* idtDesc = reinterpret_cast<GlobalTableDescriptor*>(mSize);
-	idtDesc->Size = 100 * sizeof(IDTTableDescriptor) - 1;
-	idtDesc->BaseAddress = 0x1420A0 + sizeof(GlobalTableDescriptor);
-	mSize += sizeof(GlobalTableDescriptor);
+{	
+	AddGlobalTableDescriptor(sizeof(SegmentDescriptor) * 3 + sizeof(TaskStateSegmentDescriptor) - 1,
+							GDT_START_ADDRESS + sizeof(GlobalTableDescriptor));
+	AddSegmentDescriptor(0, 0, 0, 0); // NULL Descriptor
+	AddSegmentDescriptor(0, 0xFFFFF, 0x9A, 0xAF); // Code Descriptor
+	AddSegmentDescriptor(0, 0xFFFFF, 0x92, 0xAF); // Data Descriptor
+	AddTssSegmentDescriptor(mTableIndex + sizeof(TaskStateSegmentDescriptor), sizeof(TssSegment) - 1, 0x89, 0x80);
+	AddTssSegment(0xFFFF);
+	
+	AddGlobalTableDescriptor(100 * sizeof(IDTTableDescriptor) - 1, IDT_START_ADDRESS + sizeof(GlobalTableDescriptor));
 		
 	for (int i = 0; i < 100; i++)
 	{
-		AddIDTDescriptor(reinterpret_cast<uint64_t>(test), 0x08, 0x8601, 0);
+		AddIDTDescriptor(reinterpret_cast<uint64_t>(Interrupt::dummy), 0x08, 0x01, 0x8E);
 	}
-		
-	loadGDT(mGDTBlock);
+	
+	loadGDT(GDT_START_ADDRESS);
 	loadTS(0x18); // offset of tss segment in gdt
-	loadIDTR(0x1420A0);
+	loadIDTR(IDT_START_ADDRESS);
+}
+
+void GDTBlockManager::AddGlobalTableDescriptor(
+	uint16_t size,
+	uint64_t baseAddress)
+{
+	GlobalTableDescriptor* desc = reinterpret_cast<GlobalTableDescriptor*>(mTableIndex);
+	desc->Size = size;
+	desc->BaseAddress = baseAddress;
+	desc->Padding1 = 0;
+	desc->Padding2 = 0;
+	
+	mTableIndex += sizeof(GlobalTableDescriptor);
 }
 
 void GDTBlockManager::AddSegmentDescriptor(
-	uint32_t segmentSize,
-	uint16_t lowerBaseAddress,
-	uint8_t upperBaseAddress1,
-	uint8_t typeAndFlags,
-	uint8_t upperFlags,
-	uint8_t upperBaseAddress2)
+	uint32_t baseAddress,
+	uint32_t limit,
+	uint8_t lowerFlags,
+	uint8_t upperFlags)
 {
-	SegmentDescriptor* desc = reinterpret_cast<SegmentDescriptor*>(mSize);
-	desc->LowerSegmentSize = segmentSize & 0xFFFF;
-	desc->LowerBaseAddress = lowerBaseAddress;
-	desc->UpperBaseAddress1 = upperBaseAddress1;
-	desc->TypeAndFlags = typeAndFlags;
-	desc->UpperSegmentSizeAndFlags = ((segmentSize >> 16) & 0xFF) | upperFlags;
-	desc->UpperBaseAddress2 = upperBaseAddress2;
+	SegmentDescriptor* desc = reinterpret_cast<SegmentDescriptor*>(mTableIndex);
+	desc->LowerSegmentSize = limit & 0xFFFF;
+	desc->LowerBaseAddress = baseAddress & 0xFFFF;
+	desc->UpperBaseAddress1 = (baseAddress >> 16) & 0xFF;
+	desc->TypeAndFlags = lowerFlags;
+	desc->UpperSegmentSizeAndFlags = ((limit >> 16) & 0xFF) | upperFlags;
+	desc->UpperBaseAddress2 = (baseAddress >> 24) & 0xFF;
 	
-	mSize += sizeof(SegmentDescriptor);
+	mTableIndex += sizeof(SegmentDescriptor);
 }
 
 void GDTBlockManager::AddTssSegmentDescriptor(
-	uint32_t segmentSize,
 	uint64_t baseAddress,
-	uint8_t typeAndFlags,
-	uint8_t upperFlags,
-	uint32_t reserved)
+	uint32_t limit,
+	uint8_t lowerFlags,
+	uint8_t upperFlags)
 {
-	TaskStateSegmentDescriptor* desc = reinterpret_cast<TaskStateSegmentDescriptor*>(mSize);
-	desc->LowerSegmentSize = segmentSize & 0xFFFF;
+	TaskStateSegmentDescriptor* desc = reinterpret_cast<TaskStateSegmentDescriptor*>(mTableIndex);
+	desc->LowerSegmentSize = limit & 0xFFFF;
 	desc->LowerBaseAddress = baseAddress & 0xFFFF;
 	desc->MiddleBaseAddress1 = (baseAddress >> 16) & 0xFF;
-	desc->TypeAndFlags = typeAndFlags;
-	desc->MiddleSegmentSizeAndFlags = ((segmentSize >> 16) & 0xFF) | upperFlags;
+	desc->TypeAndFlags = lowerFlags;
+	desc->MiddleSegmentSizeAndFlags = ((limit >> 16) & 0xFF) | upperFlags;
 	desc->MiddleBaseAddress2 = (baseAddress >> 24) & 0xFF;
 	desc->UpperBaseAddress = (baseAddress >> 32);
 	desc->Reserved = 0;
 	
-	mSize += sizeof(TaskStateSegmentDescriptor);
+	mTableIndex += sizeof(TaskStateSegmentDescriptor);
 }
 
 void GDTBlockManager::AddTssSegment(
-	uint32_t reserved1,
-	uint64_t rsp[3],
-	uint64_t reserved2,
-	uint64_t ist[7],
-	uint64_t reserved3,
-	uint16_t reserved4,
 	uint16_t ioMapBaseAddress)
 {
-	TssSegment* segment = reinterpret_cast<TssSegment*>(mSize);
+	TssSegment* segment = reinterpret_cast<TssSegment*>(mTableIndex);
 	segment->Reserved1 = 0;
-	copy(segment->RSP, rsp, 3);
 	segment->Reserved2 = 0;
-	copy(segment->IST, ist, 7);
+	segment->IST[0] = 0x800000;
 	segment->Reserved3 = 0;
 	segment->Reserved4 = 0;
 	segment->IOMapBaseAddress = ioMapBaseAddress;
 	
-	mSize += sizeof(TssSegment);
+	mTableIndex += sizeof(TssSegment);
 }
 
 void GDTBlockManager::AddIDTDescriptor(
 	uint64_t handlerOffset,
 	uint16_t segmentSelector,
-	uint16_t typeAndFlags,
-	uint32_t reserved)
+	uint8_t ist,
+	uint8_t flags)
 {
-	IDTTableDescriptor* desc = reinterpret_cast<IDTTableDescriptor*>(mSize);
+	IDTTableDescriptor* desc = reinterpret_cast<IDTTableDescriptor*>(mTableIndex);
 	desc->HandlerOffset1 = handlerOffset & 0xFFFF;
 	desc->SegmentSelector = segmentSelector;
-	desc->TypeAndFlags = typeAndFlags;
+	desc->IST = ist & 0x3;
+	desc->TypeAndFlags = flags;
 	desc->HandlerOffset2 = (handlerOffset >> 16) & 0xFFFF;
-	desc->HandlerOffset3 = (handlerOffset >> 32) & 0xFFFFFFFF;
-	desc->Reserved = reserved;
+	desc->HandlerOffset3 = (handlerOffset >> 32);
+	desc->Reserved = 0;
 	
-	mSize += sizeof(IDTTableDescriptor);
-}
-
-void GDTBlockManager::copy(uint64_t* dest, uint64_t* source, int length)
-{
-	for (int i = 0; i < length; i++)
-	{
-		dest[i] = source[i];
-	}
+	mTableIndex += sizeof(IDTTableDescriptor);
 }
 
 void GDTBlockManager::loadGDT(uint64_t baseAddress)

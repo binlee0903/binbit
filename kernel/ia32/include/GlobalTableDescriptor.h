@@ -9,7 +9,7 @@ struct GlobalTableDescriptor final
 {
 	uint16_t Size;
 	uint64_t BaseAddress;
-	uint16_t Padding;
+	uint16_t Padding1;
 	uint32_t Padding2;
 };
 

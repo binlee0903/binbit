@@ -15,48 +15,49 @@ public:
 	GDTBlockManager(Console& console);
 	~GDTBlockManager() = default;
 	
+	void AddGlobalTableDescriptor(
+		uint16_t size,
+		uint64_t baseAddress
+	);
+	
 	void AddSegmentDescriptor(
-		uint32_t segmentSize,
-		uint16_t lowerBaseAddress,
-		uint8_t upperBaseAddress1,
-		uint8_t typeAndFlags,
-		uint8_t upperFlags,
-		uint8_t upperBaseAddress2);
+		uint32_t baseAddress,
+		uint32_t limit,
+		uint8_t lowerFlags,
+		uint8_t upperFlags
+	);
 	
 	void AddTssSegmentDescriptor(
-		uint32_t segmentSize,
 		uint64_t baseAddress,
-		uint8_t typeAndFlags,
-		uint8_t upperFlags,
-		uint32_t reserved);
+		uint32_t limit,
+		uint8_t lowerFlags,
+		uint8_t upperFlags
+	);
 	
 	void AddTssSegment(
-		uint32_t reserved1,
-		uint64_t rsp[3],
-		uint64_t reserved2,
-		uint64_t ist[7],
-		uint64_t reserved3,
-		uint16_t reserved4,
 		uint16_t ioMapBaseAddress);
 	
 	void AddIDTDescriptor(
 		uint64_t handlerOffset,
 		uint16_t segmentSelector,
-		uint16_t typeAndFlags,
-		uint32_t reserved);
+		uint8_t ist,
+		uint8_t flags
+	);
 
 private:
-	void copy(uint64_t* dest, uint64_t* source, int length);
-	
 	void loadGDT(uint64_t baseAddress);
 	void loadTS(uint16_t baseAddress);
 	void loadIDTR(uint64_t baseAddress);
 	
 private:
-	uint64_t mGDTBlock;
-	uint64_t mSize;
-	
 	Console& mConsole;
+	uint64_t mTableIndex;
+	
+	enum
+	{
+		GDT_START_ADDRESS = 0x142000,
+		IDT_START_ADDRESS = 0x1420A0
+	};
 };
 
 #endif
